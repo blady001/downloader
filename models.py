@@ -1,6 +1,9 @@
 from __future__ import unicode_literals
+from Queue import Queue
+from threading import Thread
 from lxml import html
 import requests
+from utils import download_link
 
 
 class GitHubLinkScarper(object):
@@ -49,12 +52,31 @@ class GitHubLinkScarper(object):
         return data
 
 
-class Downloader(object):
+class DownloadWorker(Thread):
+    def __init__(self, queue):
+        Thread.__init__(self)
+        self.queue = queue
 
-    def __init__(self, initial_link, file_type, link_scraper=GitHubLinkScarper):
-        self.file_type = file_type
-        self.link_scraper = link_scraper(initial_link)
+    def run(self):
+        while True:
+            directory, link = self.queue.get()
+            download_link(directory, link)
+            self.queue.task_done()
+
+
+class Downloader(object):
+    def __init__(self, initial_link, file_types,
+                 link_scraper=GitHubLinkScarper):
+        self.link_scraper = link_scraper(initial_link, file_types)
 
     def download(self):
         links = self.link_scraper.collect_links()
-
+        queue = Queue()
+        for x in range(2):
+            worker = DownloadWorker(queue)
+            worker.daemon = True
+            worker.start()
+        for link in links:
+            queue.put(('downloads/', link))
+        queue.join()
+        print "Done"
