@@ -3,3 +3,4 @@
 *.pyc
 *.jpg
 downloads/
+.DS_Store
