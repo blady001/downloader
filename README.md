@@ -9,7 +9,7 @@ separately. It is most useful in case of large assets directories (like in many 
 Usage
 -----
 Simply run main.py script, it will prompt you to pass url to the desired repo and (optionally) specify file types. 
-NOTES:
+Pay attention:
  - Please make sure that 'downloads' folder is in the script's direcotory. It is a place where downloaded files are stored.
  - The default behavior is that script searches for files not only in a repo's directory passed from link but also in all 
  subdirs of the that directory, i.e. it tries to fetch ALL files with a given extension. For now it is unresolved.
