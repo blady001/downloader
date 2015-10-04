@@ -12,7 +12,7 @@ class FakeResponse(object):
 
 class GitHubScarperTest(TestCase):
 
-    def test_segregate_links(self):
+    def test_segregates_links(self):
         template = """
         <tr class="js-navigation-item">
             <td class="icon">
@@ -110,6 +110,16 @@ class GitHubScarperTest(TestCase):
                         </span>
                     </td>
                 </tr>
+                <tr class="js-navigation-item">
+                    <td class="icon">
+                        <span class="octicon octicon-file-text"></span>
+                    </td>
+                    <td class="content">
+                        <span>
+                            <a href="/blob/link/to/file3.png">FileLink</a>
+                        </span>
+                    </td>
+                </tr>
             </table>
         </body>
         """
@@ -118,6 +128,45 @@ class GitHubScarperTest(TestCase):
         results = scarper.collect_links()
         self.assertEqual(len(results), 2)
         files = ['file1.jpg', 'file2.jpg']
+        for link in results:
+            self.assertIn('raw', link)
+            self.assertNotIn('blob', link)
+            filename = link.split('/')[-1]
+            self.assertIn(filename, files)
+
+    @mock.patch('models.requests.get')
+    def test_retrieves_all_files_if_no_specific_types_passed(self, get_meth):
+        template = """
+        <body>
+            <table>
+                <tr class="js-navigation-item">
+                    <td class="icon">
+                        <span class="octicon octicon-file-text"></span>
+                    </td>
+                    <td class="content">
+                        <span>
+                            <a href="/blob/link/to/file1.jpg">FileLink</a>
+                        </span>
+                    </td>
+                </tr>
+                <tr class="js-navigation-item">
+                    <td class="icon">
+                        <span class="octicon octicon-file-text"></span>
+                    </td>
+                    <td class="content">
+                        <span>
+                            <a href="/blob/link/to/file2.png">FileLink</a>
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        """
+        get_meth.return_value = FakeResponse(template)
+        scarper = GitHubLinkScarper('whatever')
+        results = scarper.collect_links()
+        self.assertEqual(len(results), 2)
+        files = ['file1.jpg', 'file2.png']
         for link in results:
             self.assertIn('raw', link)
             self.assertNotIn('blob', link)

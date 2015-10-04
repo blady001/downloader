@@ -12,7 +12,7 @@ class GitHubLinkScarper(object):
     DIR_CLASS = 'octicon octicon-file-directory'
     FILE_CLASS = 'octicon octicon-file-text'
 
-    def __init__(self, initial_link, file_types):
+    def __init__(self, initial_link, file_types=list()):
         self.initial_link = initial_link
         self.file_types = file_types
         self.download_links = list()
@@ -45,10 +45,11 @@ class GitHubLinkScarper(object):
                 link = row[1][0][0].get('href')
                 parts = link.split('/')
                 last = parts[-1].split('.')[-1]
-                if last in self.file_types:
-                    link = link.replace('blob', 'raw')
-                    link = self.DOMAIN_BASE + link
-                    data['download_links'].append(link)
+                if self.file_types and last not in self.file_types:
+                    continue
+                link = link.replace('blob', 'raw')
+                link = self.DOMAIN_BASE + link
+                data['download_links'].append(link)
         return data
 
 
@@ -77,6 +78,6 @@ class Downloader(object):
             worker.daemon = True
             worker.start()
         for link in links:
-            queue.put(('downloads/', link))
+            queue.put(('downloads', link))
         queue.join()
         print "Done"
